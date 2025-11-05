@@ -45,7 +45,7 @@ public class BurpExtender extends JDialog implements IBurpExtender, IExtensionSt
         "cat <<EOF > /tmp/openvpn/config.ovpn\n" +
         "PLACEHOLDER_OVPN\n" +
         "EOF\n" +
-        "docker run -d --name openvpn -p 1080:1080 --cap-add=NET_ADMIN --device /dev/net/tun -v /tmp/openvpn:/vpn dperson/openvpn-client PLACEHOLDER_AUTH\n" +
+        "docker run -d --name openvpn -p 1080:1080 --cap-add=NET_ADMIN --device /dev/net/tun -v /tmp/openvpn:/vpn avpnusr/docker-openvpn PLACEHOLDER_AUTH\n" +
         "docker run -d --name socks5 --network container:openvpn -e PROXY_USER=burp -e PROXY_PASSWORD=changeme serjs/go-socks5-proxy\n";
     // the socks password
     private CharSequence password;
@@ -112,13 +112,13 @@ public class BurpExtender extends JDialog implements IBurpExtender, IExtensionSt
                     String ovpn = new String(Files.readAllBytes(Paths.get(this.ovpn_file)));
                     String auth = "";
                     if(this.ovpn_username != null && !this.ovpn_username.isEmpty()) {
-                        // escape all bash special characters (forward slashes, doller signs, backticks, backslashes, single quotes, double quotes, exclamation marks, and asterisks)
-                        auth = "-a '"+ this.ovpn_username + ";"+this.ovpn_password.replaceAll("([/\\$`'\"!\\*])", "\\\\$1")+"'";
+                        // escape all necessary characters for bash
+                        // i.e. encapsulated single quotes and escape backslashes and dollar signs
+                        auth = "-a '"+ this.ovpn_username + ";"+this.ovpn_password.replaceAll("'","'\"'\"'").replaceAll("([\\$])", "\\\\$1")+"'";
                     }
                     newDroplet.setUserData(droplet_init_script.replace("changeme", this.password)
                         .replace("PLACEHOLDER_OVPN", ovpn)
                         .replace("PLACEHOLDER_AUTH", auth));
-                
                     // create a new droplet
                     stdout.println("Creating new droplet: " + newDroplet.getName());
                 } catch (IOException e) {
@@ -289,7 +289,7 @@ public class BurpExtender extends JDialog implements IBurpExtender, IExtensionSt
 
     protected void openIfconfigRepeaterTab() {
         stdout.println("Opening ifconfig.co repeater tab...");
-        String request = "GET / HTTP/1.1\nHost: ifconfig.co\nUser-Agent: curl\n\n";
+        String request = "GET / HTTP/1.1\r\nHost: ifconfig.co\r\nUser-Agent: curl\r\n\r\n";
         callbacks.sendToRepeater("ifconfig.co", 443, true, callbacks.getHelpers().stringToBytes(request), "IP check");
     }
 

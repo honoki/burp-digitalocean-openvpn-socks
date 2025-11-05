@@ -2,19 +2,19 @@
 
 // Apply the Java plugin
 apply plugin: 'java'
-sourceCompatibility = 11
-targetCompatibility = 11
 
-// Use Maven (because Burp Extender is on Maven)
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+// Use Maven (because Burp Exteleander is on Maven)
 repositories {
      mavenCentral()
 }
 
 dependencies {
     implementation 'net.portswigger.burp.extender:burp-extender-api:2.1'
-    implementation 'org.eclipse.jetty:jetty-server:11.0.7'
-    implementation 'org.eclipse.jetty:jetty-servlet:11.0.7'
-    implementation 'javax.servlet:servlet-api:2.5'
     implementation 'com.google.code.gson:gson:2.8.9'
     implementation 'com.myjeeva.digitalocean:digitalocean-api-client:2.17'
 }
@@ -34,7 +34,7 @@ configurations {
 
 // Create a task for bundling all dependencies into a jar file.
 task bigJar(type: Jar) {
-    baseName = project.name + '-all'
+    archiveBaseName.set(project.name + '-all')
     duplicatesStrategy = 'include'
     from { configurations.customConfig.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
